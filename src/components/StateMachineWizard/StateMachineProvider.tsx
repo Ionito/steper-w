@@ -1,15 +1,15 @@
 import {
+  PropsWithChildren,
   createContext,
+  useCallback,
   useMemo,
   useState,
-  useCallback,
-  PropsWithChildren,
 } from "react";
 import { NavHistoryItem, StateMachineConfig } from ".";
 import {
+  aggregateWizardDataForStep,
   findStepPositionByName,
   getStepView,
-  aggregateWizardDataForStep,
 } from "./utils";
 
 type Props<T, V extends string> = {
@@ -50,14 +50,14 @@ export const StateMachineProvider = <T, V extends string>({
   console.log("stateMachineConfig", stateMachineConfig);
   const aggregatedStepState = useMemo<{}>(
     () => aggregateWizardDataForStep(curStepPos, navHistory, wizardDataByStep),
-    [curStepPos, navHistory, wizardDataByStep],
+    [curStepPos, navHistory, wizardDataByStep]
   );
 
   const setStepData = useCallback(
     (
       stepData:
         | Partial<T>
-        | ((prev: Partial<T>, agregated: Partial<T>) => Partial<T>),
+        | ((prev: Partial<T>, agregated: Partial<T>) => Partial<T>)
     ) => {
       if (curStepPos === -1) {
         return;
@@ -71,7 +71,7 @@ export const StateMachineProvider = <T, V extends string>({
             : { ...prevState[stepName], ...stepData },
       }));
     },
-    [navHistory, curStepPos, aggregatedStepState],
+    [navHistory, curStepPos, aggregatedStepState]
   );
 
   const navigateTo = useCallback(
@@ -88,15 +88,14 @@ export const StateMachineProvider = <T, V extends string>({
         return;
       setCurStepName(navHistory[stepPos].stepName);
     },
-    [curStepPos, navHistory],
+    [curStepPos, navHistory]
   );
 
   const [errors, setErrors] = useState<string[]>([]);
 
   const determineNextStep = (stepName: V, stepState: T) => {
-    console.log("CONFIG", stateMachineConfig);
     const stepMetadata = stateMachineConfig.steps[stepName];
-    console.log("METADATA", stepMetadata);
+
     if (stepMetadata.isTerminal) {
       return undefined;
     }
@@ -107,7 +106,7 @@ export const StateMachineProvider = <T, V extends string>({
         // if when condition is not specified, this step is automatically selected as next
         // that's why it's recommended to define such fallback steps in the end of choices map
         !availableTransitions[transitionStepName as V]?.when ||
-        !!availableTransitions[transitionStepName as V]?.when?.(stepState),
+        !!availableTransitions[transitionStepName as V]?.when?.(stepState)
     );
   };
 
@@ -115,7 +114,7 @@ export const StateMachineProvider = <T, V extends string>({
   const onNextClick = () => {
     const nextStepName = determineNextStep(
       navHistory[curStepPos].stepName,
-      aggregatedStepState as T,
+      aggregatedStepState as T
     ) as V;
     if (!nextStepName) {
       return;
@@ -133,15 +132,15 @@ export const StateMachineProvider = <T, V extends string>({
             delete updatedWizardData[stepToDelete.stepName];
             return updatedWizardData;
           },
-          { ...prevData },
-        ),
+          { ...prevData }
+        )
       );
       // cleanup transitions after current step and add new step
       const NextView = getStepView(stateMachineConfig, nextStepName);
       updateNavHistory((prevNav) =>
         prevNav
           .slice(0, curStepPos + 1)
-          .concat({ Component: <NextView />, stepName: nextStepName }),
+          .concat({ Component: <NextView />, stepName: nextStepName })
       );
     }
     setCurStepName(nextStepName);
@@ -155,7 +154,7 @@ export const StateMachineProvider = <T, V extends string>({
       navigateTo,
       onNextClick,
     }),
-    [errors, setStepData, setErrors, navigateTo],
+    [errors, setStepData, setErrors, navigateTo]
   );
 
   return (
